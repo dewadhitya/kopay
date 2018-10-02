@@ -14,9 +14,17 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2{
 
@@ -24,9 +32,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Test_PhotoCapture");
 
-    Mat mRgba, imgGray, imgCanny, imgHough, imgLines;
+    Mat mRgba, imgGray, imgCanny, imgHough, imgLines, hierarchy;
     JavaCameraView javaCameraView;
     Button buttonCapture;
+    //ArrayList contours;
+    List<MatOfPoint> contours;
+    List<MatOfPoint> contour;
+    Scalar CONTOUR_COLOR;
+    Size ksize;
 
     BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -101,9 +114,33 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         mRgba = inputFrame.rgba();
+        contours = new ArrayList<MatOfPoint>();
+        hierarchy = new Mat();
 
         Imgproc.cvtColor(mRgba, imgGray, Imgproc.COLOR_RGB2GRAY);
         Imgproc.threshold(imgGray, imgCanny, 0, 255, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
+        Imgproc.findContours(imgCanny, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0,0));
+
+        hierarchy.release();
+
+        for (int contourIdx=0; contourIdx<contours.size(); contourIdx++){
+            MatOfPoint2f approxCurve = new MatOfPoint2f();
+            MatOfPoint2f contour2f = new MatOfPoint2f(contours.get(contourIdx).toArray());
+
+            double approxDistance = Imgproc.arcLength(contour2f, true)*0.02;
+            Imgproc.approxPolyDP(contour2f, approxCurve, approxDistance, true);
+
+            //COnvert back to MatOfPoint
+            MatOfPoint points = new MatOfPoint(approxCurve.toArray());
+
+            //Get bounding rect of contour
+            Rect rect = Imgproc.boundingRect(points);
+
+            //Core.rectangle(mRgba, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(255, 0, 0, 255), 3);
+            Imgproc.rectangle(mRgba, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(255, 0, 0, 255), 3);
+
+        }
+
 //        Imgproc.Canny(imgGray, imgCanny, 50, 90, 20, 20);
 //        Imgproc.HoughLinesP(imgCanny, imgHough, 1, Math.PI/180,50,20,20);
 
@@ -119,6 +156,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //            Imgproc.line(imgHough, start, end, new Scalar(255, 0, 0), 3);
 //        }
 
-        return imgCanny;
+        return mRgba;
     }
 }
