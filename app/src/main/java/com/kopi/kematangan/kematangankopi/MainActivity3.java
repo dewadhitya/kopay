@@ -138,9 +138,9 @@ public class MainActivity3 extends AppCompatActivity implements CameraBridgeView
 //        Mat g_value = new Mat();
 //        Mat b_value = new Mat();
         List<Mat> rgb_value = new ArrayList<>();
-        Core.bitwise_and(invBw,rgb_value.get(0),rgb_value.get(0));
-        Core.bitwise_and(invBw,rgb_value.get(1),rgb_value.get(1));
-        Core.bitwise_and(invBw,rgb_value.get(2),rgb_value.get(2));
+        Core.bitwise_and(invBw,r_channel,rgb_value.get(0));
+        Core.bitwise_and(invBw,g_channel,rgb_value.get(1));
+        Core.bitwise_and(invBw,b_channel,rgb_value.get(2));
 
         rgbObj = new Mat();
         Core.merge(rgb_value,rgbObj);
