@@ -168,7 +168,7 @@ public class Mat {
     //
 
     // javadoc: Mat::channels()
-    public int channels()
+    public int channels(int i)
     {
 
         int retVal = n_channels(nativeObj);
